@@ -1,0 +1,991 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view contentType="text/html">
+        <h:head>
+
+            <meta content='text/html; charset=UTF-8' http-equiv="Content-Type"/>
+            <link href="primefaces_tamanho.css" rel="stylesheet" type="text/css" />
+            <title>Sistema de Alocação de Horários Acadêmicos</title>
+            <link href="resource/css/layoutpersonalizado.css" rel="stylesheet" type="text/css"/>
+            <link href="resource/css/efeitoloading.css" rel="stylesheet" type="text/css"/>
+            <script>
+                PrimeFaces.locales['pt'] = {
+                    closeText: 'Fechar',
+                    prevText: 'Anterior',
+                    nextText: 'Próximo',
+                    currentText: 'Começo',
+                    monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+                    monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+                    dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+                    dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+                    dayNamesMin: ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'],
+                    weekHeader: 'Semana',
+                    firstDay: 1,
+                    isRTL: false,
+                    showMonthAfterYear: false,
+                    yearSuffix: '',
+                    timeOnlyTitle: 'Só Horas',
+                    timeText: 'Tempo',
+                    hourText: 'Hora',
+                    minuteText: 'Minuto',
+                    secondText: 'Segundo',
+                    currentText: 'Data Atual',
+                    ampm: false,
+                    month: 'Mês',
+                    week: 'Semana',
+                    day: 'Dia',
+                    allDayText: 'Todo Dia'
+                };
+                function abrirLoading() {
+                    doc = document.getElementById('carregando');
+                    doc.style.display = 'block';
+                }
+
+                function fecharLoading() {
+                    doc = document.getElementById('carregando');
+                    doc.style.display = 'none';
+                }
+
+            </script>
+        </h:head>
+
+        <h:body>
+            <p:growl id="growl" showDetail="true" life="3000"/>
+            <div class="loading" 
+                 id="carregando">
+                loading&#8230;
+            </div>
+
+            <div id="header" 
+                 class="ui-g-12"
+                 style="background: white; box-decoration-break: inherit ; border-bottom-style: ridge; color: dimgray; margin: 0px; padding-top: 0px; overflow: hidden; height: 70px;">
+                <h2 align="center">Projeto AHA</h2>
+            </div>       
+
+
+            <div class="ui-g-4">
+                <h:form>
+                    <p:accordionPanel style="margin-top:20px">
+                        <p:tab title="Cadastros">
+                            <p:commandButton value="Dia" 
+                                             icon="ui-icon-pencil" 
+                                             ajax="true"
+                                             id="cadastraDia" 
+                                             action="#{diaBean.prepararDia()}"  
+                                             process="@this" 
+                                             onclick="abrirLoading();"
+                                             oncomplete="PF('dialogCadBaseDia').show();fecharLoading();"
+                                             update=":formDia" 
+                                             class="w3-padding"
+                                             style="width: 100%"/>
+                            <p:commandButton value="Horario" 
+                                             icon="ui-icon-pencil" 
+                                             id="cadastraHorario" 
+                                             action="#{horarioBean.prepararHorario()}"  
+                                             onclick="abrirLoading();"
+                                             process="@this" 
+                                             oncomplete="PF('dialogCadBaseHorarioL').show();fecharLoading();" 
+                                             update=":formHorarioLista"
+                                             class="w3-padding"
+                                             style="width: 100%"/>
+                            <p:commandButton value="Sala" 
+                                             process="@this"
+                                             icon="ui-icon-pencil" 
+                                             id="cadastraSala" 
+                                             action="#{salaBean.prepararSala()}" 
+                                             oncomplete="PF('dialogCadBaseSalaL').show();" 
+                                             update=":formSalaLista" 
+                                             class="w3-padding"
+                                             style="width: 100%"/>
+                            <p:commandButton value="Curso" 
+                                             process="@this"
+                                             icon="ui-icon-pencil" 
+                                             id="cadastraCurso" 
+                                             onclick="abrirLoading();"
+                                             action="#{cursoBean.prepararCurso()}" 
+                                             oncomplete="PF('dialogCadBaseCursoL').show();fecharLoading();" 
+                                             update=":formCursoLista" 
+                                             class="w3-padding"
+                                             style="width: 100%"/>
+                            <p:commandButton value="Professor" 
+                                             process="@this"
+                                             icon="ui-icon-pencil" 
+                                             id="cadastraProf" 
+                                             action="#{professorBean.prepararProf()}"  
+                                             oncomplete="PF('dialogCadBaseProfL').show();fecharLoading();" 
+                                             onclick="abrirLoading();"
+                                             update=":formProfLista" 
+                                             class="w3-padding"
+                                             style="width: 100%"/>
+                        </p:tab>
+                        <p:tab title="Preparação para grade">
+                            <p:commandButton value="Gerar HorarioAulas" 
+                                             icon="ui-icon-pencil" 
+                                             id="gerarHA" 
+                                             action="#{horarioAulaBean.gerarHorarioAula()}"  
+                                             process="@this"
+                                             class="w3-padding"
+                                             style="width: 100%"/>
+                            <p:commandButton value="Gerar DisciplinaAulas" 
+                                             icon="ui-icon-pencil" 
+                                             id="gerarDA"   
+                                             process="@this"
+                                             oncomplete="PF('dialogGerarDiscAula').show();fecharLoading();" 
+                                             onclick="abrirLoading();"
+                                             update=":formDiscAula" 
+                                             class="w3-padding"
+                                             action="#{disciplinaAulaBean.prepararAulaBean()}"
+                                             style="width: 100%"/>
+                            <p:commandButton value="Disciplina do Simestre Sem Prorfessor" 
+                                             icon="ui-icon-pencil" 
+                                             id="ListarDiscAual"  
+                                             process="@this"
+                                             oncomplete="PF('dialogDiscAulaLista').show();fecharLoading();" 
+                                             onclick="abrirLoading();"
+                                             update=":formDiscAulaLista" 
+                                             class="w3-padding"
+                                             action="#{disciplinaAulaBean.prepararListaDiscAula()}"
+                                             style="width: 100%"/>
+                        </p:tab>
+                        <p:tab title="Gerador de Horários">
+                            <p:commandButton value="GerarHorario" 
+                                             icon="ui-icon-pencil" 
+                                             id="escolher"   
+                                             class="w3-padding"
+                                             onclick="abrirLoading();"
+                                             update="growl"
+                                             oncomplete="fecharLoading();"
+                                             action="#{geradorBean.gerarGrade()}"
+                                             style="width: 100%"/>                      
+                            <p:commandButton value="Grade de Horario" 
+                                             icon="ui-icon-pencil" 
+                                             class="w3-padding"
+                                             update=":formMostrarHorarioGerado" 
+                                             action="#{horarioAulaBean.limpar()}" 
+                                             id="gradehorario" 
+                                             oncomplete="PF('dialogGradeHorario').show();fecharLoading();" 
+                                             onclick="abrirLoading();"
+                                             style="width: 100%"/>        
+                        </p:tab>
+                    </p:accordionPanel>                
+                </h:form>
+            </div>
+
+            <p:dialog header="Escolha os dias da semana" 
+                      widgetVar="dialogCadBaseDia"  
+                      resizable="false"
+                      modal="true"
+                      showEffect="slide" 
+                      width="500">
+                <h:form id="formDia">
+
+                    <h:panelGrid id="statusgr" 
+                                 columns="8" 
+                                 style="margin-bottom:10px" 
+                                 cellpadding="10">                        
+                        <h:outputText value="Domingo: " />  
+                        <p:selectBooleanCheckbox value="#{diaBean.domingo}" /> 
+                        <h:outputText value="Segunda: " />  
+                        <p:selectBooleanCheckbox value="#{diaBean.segunda}" /> 
+                        <h:outputText value="Terça: " />  
+                        <p:selectBooleanCheckbox value="#{diaBean.terça}" /> 
+                        <h:outputText value="Quarta: " />  
+                        <p:selectBooleanCheckbox value="#{diaBean.quarta}" /> 
+                        <h:outputText value="Quinta: " />  
+                        <p:selectBooleanCheckbox value="#{diaBean.quinta}" /> 
+                        <h:outputText value="Saxta: " />  
+                        <p:selectBooleanCheckbox value="#{diaBean.sexta}" /> 
+                        <h:outputText value="Sábado: " />  
+                        <p:selectBooleanCheckbox value="#{diaBean.sabado}" /> 
+                        <h:outputText value="" />  
+                        <h:outputText value="" />  
+                    </h:panelGrid>
+                    <p:commandButton action="#{diaBean.salvar()}"
+                                     value="Salvar" 
+                                     onclick="dialogStatusEvento.closer()"
+                                     class="w3-padding"
+                                     style="width: 100%"/>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Escolha os Horários"
+                      widgetVar="dialogCadBaseHorarioL"  
+                      resizable="false" 
+                      modal="true" 
+                      showEffect="slide"
+                      width="900">
+                <h:form id="formHorarioLista">
+                    <p:commandButton id="chamadaaddpm" 
+                                     onclick="abrirLoading();"
+                                     action="#{horarioBean.limpar()}" 
+                                     oncomplete="PF('dialogCadBaseHorario').show();fecharLoading();" 
+                                     update=":formHorario:statusgr" 
+                                     value="Adicionar Horário" 
+                                     class="w3-padding"
+                                     style="width: 100%"/>
+                    <p:dataTable  id="tabelaHorario" 
+                                  var="horario" 
+                                  value="#{horarioBean.lista}" 
+                                  paginator="true" 
+                                  class="w3-striped w3-bordered w3-border w3-hoverable w3-white"
+                                  rows="50" >
+                        <p:column style="width:30%;text-align: center">
+                            <f:facet name="header">
+                                <h:outputText value="Horário"/>
+                            </f:facet>
+                            <h:outputText value="#{horario.horario}" />
+                        </p:column>
+                        <p:column style="width:30%;text-align: center">
+                            <f:facet name="header">
+                                <h:outputText value="Descrição"/>
+                            </f:facet>
+                            <h:outputText value="#{horario.descricao}"/>
+                        </p:column>
+                        <p:column style="width:30%;text-align: center">
+                            <f:facet name="header">
+                                <h:outputText value="Turno"/>
+                            </f:facet>
+                            <h:outputText value="#{horario.turno}"/>
+                        </p:column>
+                        <p:column style="width:15%;text-align: center">
+                            <p:commandButton id="excluirpm" 
+                                             immediate="true" 
+                                             action="#{horarioBean.excluir()}" 
+                                             icon="ui-icon-trash" 
+                                             ajax="true"  
+                                             update="tabelaHorario" 
+                                             class="w3-padding"
+                                             onclick="if (!confirm('Confirma a exclusão do Produto Material #{horario.horario}?'))
+                                                         return false;">
+                                <f:setPropertyActionListener target="#{horarioBean.horario}" 
+                                                             value="#{horario}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Escolha um horário"
+                      widgetVar="dialogCadBaseHorario"  
+                      resizable="false" 
+                      modal="true"
+                      showEffect="slide"
+                      width="500">
+                <h:form id="formHorario">
+                    <h:panelGrid id="statusgr"
+                                 columns="2" 
+                                 style="margin-bottom:10px;width: 100%">                        
+                        <h:outputText value="Horário: " /> 
+                        <p:inputText id="horario" 
+                                     value="#{horarioBean.horario.horario}"
+                                     style="width: 100%"/>
+                        <h:outputText value="Descrição: " /> 
+                        <p:inputText id="descricao" 
+                                     value="#{horarioBean.horario.descricao}"
+                                     style="width: 100%"/>
+                        <h:outputText value="Turno: " /> 
+                        <p:inputText id="turno" 
+                                     value="#{horarioBean.horario.turno}"
+                                     style="width: 100%"/>
+                    </h:panelGrid>
+                    <p:commandButton action="#{horarioBean.salvar()}" 
+                                     value="Salvar" 
+                                     update=":formHorarioLista:tabelaHorario"  
+                                     onclick="dialogCadBaseHorario.hide()"
+                                     style="width: 100%"
+                                     class="w3-padding" />
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Escolha as Salas" 
+                      widgetVar="dialogCadBaseSalaL" 
+                      resizable="false" 
+                      modal="true" 
+                      showEffect="slide" 
+                      width="500">
+                <h:form id="formSalaLista">
+                    <p:commandButton id="chamadaaddpm" 
+                                     oncomplete="PF('dialogCadBaseSala').show();fecharLoading();" 
+                                     onclick="abrirLoading();"
+                                     action="#{salaBean.limpar()}"  
+                                     update=":formSala:statusgr" 
+                                     value="Adicionar Horário"
+                                     style="width: 100%"
+                                     class="w3-padding"/>
+                    <p:dataTable  id="tabelaSala" 
+                                  var="sala" 
+                                  value="#{salaBean.lista}" 
+                                  paginator="true" 
+                                  rows="6"  >
+                        <p:column  style="width:40%">
+                            <f:facet name="header">
+                                <h:outputText value="Sala"/>
+                            </f:facet>
+                            <h:outputText value="#{sala.sala}" />
+                        </p:column>
+                        <p:column style="width:40%">
+                            <f:facet name="header">
+                                <h:outputText value="Descrição"/>
+                            </f:facet>
+                            <h:outputText value="#{sala.descricao}"/>
+                        </p:column>
+                        <p:column style="width:15%;text-align: center">
+                            <p:commandButton id="excluirpm"
+                                             immediate="true" 
+                                             action="#{salaBean.excluir()}" 
+                                             icon="ui-icon-trash" ajax="true"   
+                                             update="tabelaSala" 
+                                             class="w3-padding"
+                                             title="Excluir" 
+                                             onclick="if (!confirm('Confirma a exclusão da Sala #{sala.sala}?'))
+                                                         return false;">
+                                <f:setPropertyActionListener target="#{salaBean.sala}" 
+                                                             value="#{sala}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Escolha uma Sala" 
+                      widgetVar="dialogCadBaseSala" 
+                      resizable="false" 
+                      modal="true"
+                      showEffect="slide"
+                      width="500">
+                <h:form id="formSala">
+                    <h:panelGrid id="statusgr" 
+                                 columns="2" 
+                                 style="margin-bottom:10px;width: 100%" 
+                                 cellpadding="10">                        
+                        <h:outputText value="Sala: " /> 
+                        <p:inputText id="horario" 
+                                     value="#{salaBean.sala.sala}"
+                                     style="width: 100%"/>
+                        <h:outputText value="Descrição: " /> 
+                        <p:inputText id="descricao" 
+                                     style="width: 100%"
+                                     value="#{salaBean.sala.descricao}"/>
+                    </h:panelGrid>
+                    <p:commandButton action="#{salaBean.salvar()}" 
+                                     value="Salvar" 
+                                     class="w3-padding"  
+                                     style="width: 100%"
+                                     oncomplete="PF('dialogCadBaseSala').show();fecharLoading();" 
+                                     update=":formSalaLista:tabelaSala"/>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Professores" 
+                      widgetVar="dialogCadBaseProfL" 
+                      resizable="false"
+                      modal="true"
+                      showEffect="slide"
+                      width="500">
+                <h:form id="formProfLista">
+
+                    <p:commandButton id="chamadaaddpm"
+                                     oncomplete="PF('dialogCadBaseProf').show();fecharLoading();" 
+                                     onclick="abrirLoading();"
+                                     class="w3-padding"
+                                     style="width: 100%"
+                                     action="#{professorBean.prepararProf()}" 
+                                     update=":formProf:statusgr" 
+                                     value="Adicionar Professor" />
+                    <p:dataTable id="tabelaProf" 
+                                 var="prof" 
+                                 value="#{professorBean.lista}" 
+                                 paginator="true"                   
+                                 rows="6">
+                        <p:column style="width:40%">
+                            <f:facet name="header">
+                                <h:outputText value="Nome"/>
+                            </f:facet>
+                            <h:outputText value="#{prof.nome}" />
+                        </p:column>
+                        <p:column style="width:40%">
+                            <f:facet name="header">
+                                <h:outputText value="Matrícula"/>
+                            </f:facet>
+                            <h:outputText value="#{prof.matricula}"/>
+                        </p:column>
+                        <p:column style="width:15%;text-align: center">
+                            <p:commandButton id="excluirpm" 
+                                             immediate="true"
+                                             action="#{professorBean.excluir()}" 
+                                             icon="ui-icon-trash" 
+                                             ajax="true" 
+                                             class="w3-padding"
+                                             update="tabelaProf" 
+                                             title="Excluir" 
+                                             onclick="if (!confirm('Confirma a exclusão da Sala #{prof.nome}?'))
+                                                         return false;">
+                                <f:setPropertyActionListener target="#{professorBean.professor}" 
+                                                             value="#{prof}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Escolha um Professor"
+                      widgetVar="dialogCadBaseProf"  
+                      resizable="false"
+                      modal="true"
+                      showEffect="slide"
+                      width="500">
+                <h:form id="formProf">
+                    <h:panelGrid id="statusgr" 
+                                 columns="2"
+                                 style="margin-bottom:10px;width: 100%" 
+                                 cellpadding="10">                        
+                        <h:outputText value="Nome " /> 
+                        <p:inputText id="horario" 
+                                     style="width: 100%"
+                                     value="#{professorBean.professor.nome}"/>
+                        <h:outputText value="Matrícula " /> 
+                        <p:inputText id="matricula" 
+                                     style="width: 100%"
+                                     value="#{professorBean.professor.matricula}"/>
+                        <h:outputText value="Descrição: " /> 
+                        <p:inputText id="descricao" 
+                                     style="width: 100%"
+                                     value="#{professorBean.professor.descricao}"/>
+                    </h:panelGrid>
+                    <p:commandButton action="#{professorBean.salvar()}" 
+                                     value="Salvar" 
+                                     update=":formProfLista:tabelaProf" 
+                                     class="w3-padding"
+                                     style="width: 100%"
+                                     oncomplete="PF('dialogCadBaseProf').show();fecharLoading();" 
+                                     onclick="abrirLoading();"/>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Cursos" 
+                      widgetVar="dialogCadBaseCursoL"  
+                      resizable="false"
+                      modal="false" 
+                      showEffect="slide" 
+                      width="800">
+                <h:form id="formCursoLista">
+                    <p:commandButton id="chamadaaddpm"
+                                     oncomplete="PF('dialogCadBaseCurso').show();fecharLoading();" 
+                                     onclick="abrirLoading();"
+                                     action="#{cursoBean.prepararCurso()}"  
+                                     update=":formCurso:statusgr" 
+                                     value="Adicionar Curso" 
+                                     class="w3-padding"
+                                     style="width: 100%"/>
+                    <p:dataTable  id="tabelaCurso" 
+                                  var="curso" 
+                                  value="#{cursoBean.lista}" 
+                                  paginator="true"
+                                  rows="6">
+                        <p:column style="width:30%;text-align: center">
+                            <f:facet name="header">
+                                <h:outputText value="Curso"/>
+                            </f:facet>
+                            <h:outputText value="#{curso.curso}" />
+                        </p:column>
+                        <p:column style="width:30%;text-align: center">
+                            <f:facet name="header">
+                                <h:outputText value="Descrição"/>
+                            </f:facet>
+                            <h:outputText value="#{curso.descricao}"/>
+                        </p:column>
+                        <p:column style="width:20%;text-align: center">
+                            <p:commandButton id="adddisciplina" 
+                                             title="Add Disciplina" 
+                                             immediate="true" 
+                                             action="#{disciplinaBean.prepararDisc()}" 
+                                             oncomplete="PF('dialogCadBaseDiscL').show();fecharLoading();" 
+                                             icon="ui-icon-newwin" 
+                                             ajax="true"  
+                                             class="w3-padding"
+                                             style="width: 100%"
+                                             update=":formDisciplinaLista:tabelaDisc" 
+                                             value="Disciplinas">
+                                <f:setPropertyActionListener target="#{disciplinaBean.curso}" 
+                                                             value="#{curso}"/>
+                            </p:commandButton>
+                        </p:column>
+                        <p:column style="width:20%;text-align: center">
+                            <p:commandButton id="addTurma"
+                                             title="Add Turma" 
+                                             immediate="true"
+                                             action="#{turmaBean.prepararTurma()}" 
+                                             oncomplete="PF('dialogCadBaseTurmasL').show();fecharLoading();" 
+                                             icon="ui-icon-newwin" 
+                                             ajax="true"   
+                                             class="w3-padding"
+                                             style="width: 100%"
+                                             update=":formTurmaLista"
+                                             value="Turmas">
+                                <f:setPropertyActionListener target="#{turmaBean.curso}" 
+                                                             value="#{curso}"/>
+                            </p:commandButton>
+                        </p:column > 
+                        <p:column style="width:10%;text-align: center">
+                            <p:commandButton id="excluirpm" 
+                                             title="Excluir" 
+                                             immediate="true" 
+                                             action="#{cursoBean.excluir()}" 
+                                             icon="ui-icon-trash" 
+                                             ajax="true" 
+                                             class="w3-padding"
+                                             update="tabelaCurso"
+                                             onclick="if (!confirm('Confirma a exclusão da Sala #{curso.curso}?'))
+                                                         return false;">
+                                <f:setPropertyActionListener target="#{cursoBean.curso}"
+                                                             value="#{curso}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Escolha um Curso" 
+                      widgetVar="dialogCadBaseCurso"  
+                      resizable="false" 
+                      modal="true" 
+                      showEffect="slide"
+                      width="500">
+                <h:form id="formCurso">
+                    <h:panelGrid id="statusgr" 
+                                 columns="2" 
+                                 style="margin-bottom:10px;width: 100%" 
+                                 cellpadding="10">                        
+                        <h:outputText value="Curso " /> 
+                        <p:inputText id="horario" 
+                                     style="width: 100%"
+                                     value="#{cursoBean.curso.curso}"/>
+                        <h:outputText value="Descrição: " /> 
+                        <p:inputText id="descricao" 
+                                     style="width: 100%"
+                                     value="#{cursoBean.curso.descricao}"/>
+                    </h:panelGrid>
+                    <p:commandButton action="#{cursoBean.salvar()}" 
+                                     value="Salvar" 
+                                     class="w3-padding"
+                                     style="width: 100%"
+                                     update=":formCursoLista:tabelaCurso" 
+                                     onclick="abrirLoading();"
+                                     oncomplete="PF('dialogCadBaseCurso').show();fecharLoading();" />
+                </h:form>    
+            </p:dialog>
+
+            <h:form id="formDisciplinaLista">
+                <p:dialog header="Disciplinas do curso de #{disciplinaBean.curso.curso}" 
+                          widgetVar="dialogCadBaseDiscL"  
+                          resizable="false" 
+                          modal="false" 
+                          showEffect="slide" 
+                          width="600">
+                    <p:commandButton 
+                        id="iddisciplinacad"
+                        oncomplete="PF('dialogCadBaseDisc').show();fecharLoading();"
+                        onclick="abrirLoading();"
+                        style="width: 100%"
+                        class="w3-padding"
+                        action="#{disciplinaBean.limpar()}"  
+                        update=":formDisciplina:statusgr" 
+                        value="Adicionar Disciplina" />
+                    <p:dataTable  id="tabelaDisc" 
+                                  var="disciplina" 
+                                  value="#{disciplinaBean.lista}"
+                                  paginator="true" 
+                                  rows="6"  >
+                        <p:column style="width:40%;text-align: left">
+                            <f:facet name="header">
+                                <h:outputText value="Disciplina"/>
+                            </f:facet>
+                            <h:outputText value="#{disciplina.disciplina}" />
+                        </p:column>
+                        <p:column style="width:40%;text-align: center">
+                            <f:facet name="header">
+                                <h:outputText value="Creditos"/>
+                            </f:facet>
+                            <h:outputText value="#{disciplina.creditos}"/>
+                        </p:column>
+                        <p:column style="width:40%;text-align: center">
+                            <f:facet name="header">
+                                <h:outputText value="Periodo"/>
+                            </f:facet>
+                            <h:outputText value="#{disciplina.periodo}"/>
+                        </p:column>                    
+                        <p:column style="width:20%;text-align: center">
+                            <p:commandButton id="excluirpm" 
+                                             title="Excluir" 
+                                             immediate="true" 
+                                             action="#{disciplinaBean.excluir()}" 
+                                             icon="ui-icon-trash" 
+                                             ajax="true" 
+                                             class="w3-padding"
+                                             update="tabelaDisc" 
+                                             onclick="if (!confirm('Confirma a exclusão da Sala #{disciplina.disciplina}?'))
+                                                         return false;">
+                                <f:setPropertyActionListener target="#{disciplinaBean.disciplina}" 
+                                                             value="#{disciplina}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </p:dialog>
+            </h:form>
+
+            <p:dialog header="Cadastro de Disciplina" 
+                      widgetVar="dialogCadBaseDisc"  
+                      resizable="false" 
+                      modal="true" 
+                      showEffect="slide" 
+                      width="500">
+                <h:form id="formDisciplina">
+                    <h:panelGrid id="statusgr" 
+                                 columns="2"
+                                 style="margin-bottom:10px" 
+                                 cellpadding="10">                        
+                        <h:outputText value="Disciplina " /> 
+                        <p:inputText id="horario" 
+                                     value="#{disciplinaBean.disciplina.disciplina}"/>
+                        <h:outputText value="Descrição: " /> 
+                        <p:inputText id="descricao" 
+                                     value="#{disciplinaBean.disciplina.descricao}"/>
+                        <h:outputText value="Créditos: " /> 
+                        <p:inputText id="creditos" 
+                                     value="#{disciplinaBean.disciplina.creditos}"/>
+                        <h:outputText value="Período " /> 
+                        <p:inputText id="periodo" 
+                                     value="#{disciplinaBean.disciplina.periodo}"/>
+                    </h:panelGrid>
+                    <p:commandButton action="#{disciplinaBean.salvar()}" 
+                                     value="Salvar" 
+                                     update=":formDisciplinaLista:tabelaDisc"  
+                                     class="w3-padding"
+                                     style="width: 100%"
+                                     oncomplete="PF('dialogCadBaseDisc').show();fecharLoading();" 
+                                     onclick="abrirLoading();"/>
+                </h:form>         
+            </p:dialog>
+
+            <h:form id="formTurmaLista">
+                <p:dialog header="Turmas do curso de #{turmaBean.curso.curso}" 
+                          widgetVar="dialogCadBaseTurmasL"  
+                          resizable="false" 
+                          modal="true"
+                          showEffect="slide" 
+                          width="800">
+                    <p:commandButton id="idturmacad" 
+                                     oncomplete="PF('dialogCadBaseTurma').show();fecharLoading();" 
+                                     class="w3-padding"
+                                     style="width: 100%"
+                                     action="#{turmaBean.limpar()}"  
+                                     update=":formDisciplina:statusgr" 
+                                     value="Adicionar Turma" />
+                    <p:dataTable  id="tabelaTurma" 
+                                  var="turma" 
+                                  value="#{turmaBean.lista}"
+                                  paginator="true" 
+                                  rows="6">
+                        <p:column style="width:40%;text-align: left">
+                            <f:facet name="header">
+                                <h:outputText value="Turma"/>
+                            </f:facet>
+                            <h:outputText value="#{turma.turma}" />
+                        </p:column>
+                        <p:column style="width:40%;text-align: left">
+                            <f:facet name="header">
+                                <h:outputText value="Descrição"/>
+                            </f:facet>
+                            <h:outputText value="#{turma.descricao}"/>
+                        </p:column>
+                        <p:column style="width:20%;text-align: center">
+                            <p:commandButton id="excluirpm" 
+                                             title="Excluir" 
+                                             immediate="true" 
+                                             action="#{turmaBean.excluir()}" 
+                                             icon="ui-icon-trash"
+                                             ajax="true" 
+                                             class="w3-padding"
+                                             update="tabelaTurma" 
+                                             onclick="if (!confirm('Confirma a exclusão da Sala #{turma.turma}?'))
+                                                         return false;">
+                                <f:setPropertyActionListener target="#{turmaBean.turma}" value="#{turma}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                </p:dialog>
+            </h:form>
+
+            <p:dialog header="Cadastro de Turma" 
+                      widgetVar="dialogCadBaseTurma" 
+                      resizable="false" 
+                      modal="true" 
+                      showEffect="slide" 
+                      width="500">
+                <h:form id="formTurma">
+                    <h:panelGrid id="statusgr" 
+                                 columns="2" 
+                                 style="margin-bottom:10px" 
+                                 cellpadding="10">                        
+                        <h:outputText value="Turma: " /> 
+                        <p:inputText id="horario" 
+                                     style="width: 100%"
+                                     value="#{turmaBean.turma.turma}"/>
+                        <h:outputText value="Descrição: " /> 
+                        <p:inputText id="descricao" 
+                                     style="width: 100%"
+                                     value="#{turmaBean.turma.descricao}"/>
+                    </h:panelGrid>
+                    <p:commandButton action="#{turmaBean.salvar()}" 
+                                     value="Salvar" 
+                                     update=":formTurmaLista:tabelaTurma"
+                                     oncomplete="PF('dialogCadBaseTurma').show();fecharLoading();"
+                                     class="w3-padding"
+                                     style="width: 100%"/>
+                </h:form> 
+            </p:dialog>
+
+            <p:dialog header="Escolha as Turmas e seue Períodos" 
+                      widgetVar="dialogGerarDiscAula"  
+                      resizable="false" 
+                      modal="true" 
+                      showEffect="slide" 
+                      width="500">
+                <h:form id="formDiscAula">
+                    <p:dataTable  id="tabelaTurmaP" 
+                                  var="pt" 
+                                  value="#{disciplinaAulaBean.periodoTurmas}"
+                                  paginator="true" 
+                                  rows="6">
+                        <f:facet name="header">
+                            <p:panelGrid id="addTP" columns="2">
+                                <h:outputText value="Turma: " /> 
+                                <p:selectOneMenu id="turma" 
+                                                 value="#{disciplinaAulaBean.idturma}" >  
+                                    <f:selectItem itemLabel="Selecione um" 
+                                                  itemValue="" />  
+                                    <f:selectItems value="#{disciplinaAulaBean.turmas}" 
+                                                   var="turma" 
+                                                   itemLabel="#{turma.turma}" 
+                                                   itemValue="#{turma.idturma}"/>   
+                                </p:selectOneMenu> 
+                                <h:outputText value="Período: " /> 
+                                <p:inputMask id="periodo" 
+                                             value="#{disciplinaAulaBean.periodo}" 
+                                             mask="9" 
+                                             required="true"/>
+                                <p:commandButton id="idturmapadd" 
+                                                 action="#{disciplinaAulaBean.addPeriodoTurmas()}"  
+                                                 update="tabelaTurmaP" 
+                                                 value="Adicionar Turma" />
+                                <h:outputText value="" /> 
+                            </p:panelGrid>
+                        </f:facet> 
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Turma"/>
+                            </f:facet>
+                            <h:outputText value="#{pt.turma.turma}" />
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Período"/>
+                            </f:facet>
+                            <h:outputText value="#{pt.periodo}"/>
+                        </p:column>
+                        <p:column>
+                            <p:commandButton id="excluirpm"
+                                             title="Excluir" 
+                                             immediate="true" 
+                                             action="#{disciplinaAulaBean.excluirPT()}" 
+                                             icon="ui-icon-trash"
+                                             ajax="true"  
+                                             update="tabelaTurmaP" 
+                                             onclick="if (!confirm('Confirma a exclusão da Turma #{pt.turma.turma}?'))
+                                                         return false;">
+                                <f:setPropertyActionListener target="#{disciplinaAulaBean.periodoTurma}" 
+                                                             value="#{pt}"/>
+                            </p:commandButton>
+                        </p:column>
+                    </p:dataTable>
+                    <p:commandButton value="Gerar Disciplinas Aulas" 
+                                     action="#{disciplinaAulaBean.gerarDA()}" 
+                                     oncomplete="PF('dialogGerarDiscAula').show();fecharLoading();"
+                                     onclick="abrirLoading();"
+                                     style="width: 100%"
+                                     class="w3-padding"/>
+                </h:form>   
+            </p:dialog>
+
+            <p:dialog header="Disciplinas do Simestre" 
+                      widgetVar="dialogDiscAulaLista" 
+                      resizable="false" 
+                      modal="true"
+                      showEffect="slide"
+                      width="800">
+                <h:form id="formDiscAulaLista">
+                    <p:commandButton id="idDHsemP"  
+                                     action="#{disciplinaAulaBean.listaDiscAulasSemProf()}" 
+                                     update="tabelaTurma"
+                                     value="Disciplina sem Professor" />
+                    <p:dataTable  id="tabelaTurma" 
+                                  var="discAula" 
+                                  value="#{disciplinaAulaBean.listaDiscAulas}"
+                                  paginator="true" 
+                                  rows="6"  >
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Turma"/>
+                            </f:facet>
+                            <h:outputText value="#{discAula.turma.turma}" />
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Disciplina"/>
+                            </f:facet>
+                            <h:outputText value="#{discAula.disciplina.disciplina}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Curso"/>
+                            </f:facet>
+                            <h:outputText value="#{discAula.turma.curso.curso}"/>
+                        </p:column>
+                        <p:column>
+                            <p:commandButton id="alocarProf"
+                                             title="Alocar Professor" 
+                                             immediate="true" 
+                                             icon="ui-icon-person"
+                                             ajax="true" 
+                                             oncomplete="PF('dialogAlocarProf').show();fecharLoading();"
+                                             onclick="abrirLoading();"
+                                             update=":formAlocarProf" 
+                                             value="Alocar Professor" 
+                                             action="#{disciplinaAulaBean.prepararAlocacaoProf()}" >
+                                <f:setPropertyActionListener target="#{disciplinaAulaBean.disciplinaAula}" 
+                                                             value="#{discAula}"/>
+                            </p:commandButton>
+                        </p:column>                
+                    </p:dataTable>
+                </h:form>
+            </p:dialog>
+
+            <p:dialog header="Alocar Professor" 
+                      widgetVar="dialogAlocarProf"  
+                      resizable="false" 
+                      modal="true" 
+                      showEffect="slide" 
+                      width="500">
+                <h:form id="formAlocarProf">
+                    <p:panelGrid id="alocarprofgrid" 
+                                 columns="3">
+                        <h:outputText value="Professor: " /> 
+                        <p:selectOneMenu id="prof" 
+                                         value="#{disciplinaAulaBean.idProf}" >  
+                            <f:selectItem itemLabel="Selecione um" 
+                                          itemValue="" />  
+                            <f:selectItems value="#{disciplinaAulaBean.professores}"
+                                           var="p" 
+                                           itemLabel="#{p.nome}" 
+                                           itemValue="#{p.idprofessor}"/>   
+                        </p:selectOneMenu> 
+                        <p:commandButton id="idturmapadd" 
+                                         action="#{disciplinaAulaBean.alocarProf()}"   
+                                         value="Alocar professor" 
+                                         update=":formAlocarProf:gridDAP"/>
+                    </p:panelGrid>
+
+                    <h:panelGrid id="gridDAP" columns="1" style="margin-bottom:10px" >                        
+                        <h:outputText value="Turma: #{disciplinaAulaBean.disciplinaAula.turma.turma}" /> 
+                        <h:outputText value="Disciplina: #{disciplinaAulaBean.disciplinaAula.disciplina.disciplina}" /> 
+                        <h:outputText value="Profefessor: #{disciplinaAulaBean.disciplinaAula.professor.nome}" /> 
+                        <f:facet name="footer">
+                            <p:commandButton style="alignment-adjust: central;width: 100%" 
+                                             id="idatualizarDAP" 
+                                             onclick="abrirLoading();"
+                                             action="#{disciplinaAulaBean.prepararListaDiscAula()}" 
+                                             value="Atualizar e Fechar" 
+                                             oncomplete="PF('dialogAlocarProf').show();fecharLoading();"
+                                             class="w3-padding"
+                                             update=":formDiscAulaLista:tabelaTurma"/>
+                        </f:facet>
+                    </h:panelGrid>
+                </h:form> 
+            </p:dialog>
+
+            <p:dialog header="Grade de Horario" 
+                      widgetVar="dialogGradeHorario"  
+                      resizable="false" 
+                      modal="false" 
+                      showEffect="slide" 
+                      width="1100">
+                <h:form id="formMostrarHorarioGerado">
+                    <p:dataTable  id="tabelaTurma" 
+                                  var="turma" 
+                                  value="#{horarioAulaBean.horarioTurmas}" 
+                                  paginator="true" 
+                                  rows="3" >
+                        <p:columnGroup type="header">  
+                            <p:row>  
+                                <p:column rowspan="2"
+                                          headerText="Horários" />  
+                                <p:column colspan="5"
+                                          headerText="Dias da Semana"/>  
+                            </p:row>  
+
+                            <p:row>  
+                                <p:column headerText="Segunda" />  
+                                <p:column headerText="Terça" />  
+                                <p:column headerText="Quarta" />  
+                                <p:column headerText="Quinta" />  
+                                <p:column headerText="Sexta" />  
+                            </p:row>  
+                        </p:columnGroup>  
+                        <p:subTable var="horarioDT" 
+                                    value="#{turma.horarioDiaTurmas}">  
+                            <f:facet name="header">  
+                                #{turma.turma.turma}   
+                            </f:facet>  
+                            <p:column>                                
+                                <h:outputText value="#{horarioDT.descricao}" />
+                            </p:column> 
+                            <p:column>
+                                <h:outputText value="#{horarioDT.segunda.descricao}" />
+                            </p:column> 
+                            <p:column>
+                                <h:outputText value="#{horarioDT.terca.descricao}" />
+                            </p:column> 
+                            <p:column>
+                                <h:outputText value="#{horarioDT.quarta.descricao}" />
+                            </p:column> 
+                            <p:column>
+                                <h:outputText value="#{horarioDT.quinta.descricao}" />
+                            </p:column> 
+                            <p:column>
+                                <h:outputText value="#{horarioDT.sexta.descricao}" />
+                            </p:column> 
+                        </p:subTable>  
+                    </p:dataTable>
+                </h:form>
+            </p:dialog>
+
+
+
+            <script>
+                $(document).ready(function () {
+                    //Esconde preloader
+                    $(window).load(function () {
+                        $('#carregando').fadeOut(500);
+                        //1500 é a duração do efeito (1.5 seg)
+                    });
+                });
+            </script>
+
+        </h:body>
+    </f:view>
+</html>

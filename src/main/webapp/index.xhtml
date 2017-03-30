@@ -1,0 +1,61 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core">
+    <h:head>
+        <title>Login - Fácil Web</title>
+        <link rel="shortcut icon" href="imagens/Ico.ico" />
+    </h:head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+    <link href="resource/css/layoutpersonalizado.css" rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+        .ui-widget {
+            font-size: 14px !important;
+        }
+    </style>
+    <h:body>
+
+        <div id="header" 
+             style="background: white; box-decoration-break: inherit ; border-bottom-style: ridge; color: dimgray; margin: 0px; padding-top: 0px; overflow: hidden; height: 70px;">
+            <h2 align="center">Fácil Web</h2>
+        </div>       
+        
+        <h:link outcome="cadastro-base" value="Cadastro" />
+
+
+        <h:form id="formLogin">   
+            <p:growl id="growl" 
+                     showDetail="true" 
+                     life="3000" />  
+            <p:dialog id="dialog" 
+                      header="Login" 
+                      visible="true"
+                      closable="false" 
+                      resizable="false"
+                      responsive="true">  
+                <h:panelGrid columns="1"> 
+                    <p:inputText value="#{loginControle.login}"   
+                                 id="username" 
+                                 required="true" 
+                                 label="username"
+                                 placeholder="Login"/>  
+                    <p:password value="#{loginControle.senha}" 
+                                id="password" 
+                                required="true" 
+                                label="password" 
+                                placeholder="Senha"/> 
+                    <f:facet name="footer">  
+                        <p:commandButton id="loginButton"
+                                         value="Entrar"
+                                         update="growl" 
+                                         style="width: 100%;"
+                                         action="#{loginControle.logar()}"
+                                         class="w3-padding"/>                        
+                    </f:facet>  
+                </h:panelGrid> 
+            </p:dialog>  
+        </h:form>  
+    </h:body>
+</html>

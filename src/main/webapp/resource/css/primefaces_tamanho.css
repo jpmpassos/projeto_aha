@@ -1,0 +1,11 @@
+/* 
+    Document   : primefaces_tamanho
+    Created on : 12/07/2013, 16:54:12
+    Author     : João Paulo
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+.ui-widget,.ui-widget .ui-widget {
+     font-size: 10px !important;
+}
